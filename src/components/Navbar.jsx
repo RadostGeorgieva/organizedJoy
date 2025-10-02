@@ -1,6 +1,6 @@
 import React from 'react'
-import "../App.css"
 import logo from "../assets/logo.png"
+import { NavLink } from 'react-router-dom'
 
 function Navbar() {
   return (
@@ -8,17 +8,34 @@ function Navbar() {
       <nav className="flex items-center justify-between px-6 py-4 bg-pink-50 shadow-sm">
         {/* Logo + Brand */}
         <div className="flex items-center space-x-3">
-          <a href="/" className="flex items-center">
+          <NavLink to="/" className="flex items-center">
             <img src={logo} className="h-12 w-auto" alt="Colored Logo" />
-          </a>
+          </NavLink>
         </div>
 
         {/* Menu */}
-        <ul className="hidden md:flex space-x-8 text-pink-700 font-semibold">
-          <li><a href="#" className="hover:text-pink-900 transition">My Palette</a></li>
-          <li><a href="#" className="hover:text-pink-900 transition">My Collection</a></li>
-          <li><a href="#" className="hover:text-pink-900 transition">Wishlist</a></li>
-          <li><a href="#" className="hover:text-pink-900 transition">About Us</a></li>
+        <ul className="hidden md:flex space-x-4 font-semibold">
+          {[
+            { name: "My Palette", path: "/" },
+            { name: "My Collection", path: "/collection" },
+            { name: "Wishlist", path: "/wishlist" },
+            { name: "About Us", path: "/about" },
+          ].map((link) => (
+            <li key={link.name}>
+              <NavLink
+                to={link.path}
+                className={({ isActive }) =>
+                   `inline-flex items-center justify-center px-3 py-3 text-base rounded-full transition shadow-md ${
+                    isActive
+                      ? "bg-pink-600 text-white"
+                      : "bg-white text-pink-700 hover:bg-pink-600 hover:text-white"
+                  }`
+                }
+              >
+                {link.name}
+              </NavLink>
+            </li>
+          ))}
         </ul>
 
         {/* Hamburger for mobile */}

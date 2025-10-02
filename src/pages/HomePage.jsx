@@ -13,10 +13,10 @@ const HomePage = () => {
                 alt="React Jobs"
               />
        </NavLink>
-        <h1 className="text-4xl md:text-5xl font-bold text-pink-700 mb-6">Welcome to Your Color Journey</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-pink-700 mb-6">Welcome to Your Style Journey</h1>
       <p className="text-lg text-gray-700 mb-10 max-w-md">
         Discover your personal palette and wardrobe.  
-        Take our quick test and see which colors make you shine.
+        Take our quick test and see which colors make you shine!
       </p>
       <Link
         to="/quiz"
