@@ -1,0 +1,52 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "name": "Satin Slip Dress",
+      "category": "Dress",
+      "brand": "Zara",
+      "season": "Deep Autumn",
+      "color": {
+        "name": "Crimson",
+        "hex": "#9b1c31"
+      },
+      "image": "https://images.unsplash.com/photo-1520975661595-6453be3f7070?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      "id": "2",
+      "name": "Oversized Blazer",
+      "category": "Outerwear",
+      "brand": "Mango",
+      "season": "Deep Autumn",
+      "color": {
+        "name": "Charcoal",
+        "hex": "#333333"
+      },
+      "image": "https://images.unsplash.com/photo-1542060748-10c28b62716f?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      "id": "3",
+      "name": "High-Waist Jeans",
+      "category": "Bottoms",
+      "brand": "Levi’s",
+      "season": "All Year",
+      "color": {
+        "name": "Indigo",
+        "hex": "#264271"
+      },
+      "image": "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      "id": "4",
+      "name": "Silk Scarf",
+      "category": "Accessory",
+      "brand": "H&M",
+      "season": "Deep Autumn",
+      "color": {
+        "name": "Copper",
+        "hex": "#b87333"
+      },
+      "image": "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop"
+    }
+  ]
+}
