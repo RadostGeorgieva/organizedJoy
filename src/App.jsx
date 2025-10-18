@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 
 const App = () => {
-  
+
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -22,13 +22,30 @@ const App = () => {
       </Route>
     )
   );
-  useEffect(() => {
-  console.log('App mounted');
-  (async () => {
-    const { data, error } = await supabase.auth.getSession();
-    console.log('Supabase session check:', { data, error });
-  })();
+useEffect(() => {
+  const testInsert = async () => {
+    const { data } = await supabase.auth.getUser();
+console.log("Current user:", data.user);
+
+
+
+  };
+
+  testInsert();
 }, []);
+useEffect(() => {
+  const testSelect = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*");
+
+    console.log("Profiles read:", data, error);
+  };
+
+  testSelect();
+}, []);
+
+
   return (<RouterProvider router={router} />)
 }
 
