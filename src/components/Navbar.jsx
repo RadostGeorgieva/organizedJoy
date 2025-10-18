@@ -1,52 +1,53 @@
-import React from 'react'
-import logo from "../assets/logo.png"
-import { NavLink } from 'react-router-dom'
+// components/Navbar.jsx
+import React from "react";
+import { NavLink } from "react-router-dom";
 
-function Navbar() {
+const links = [
+  { name: "Home", path: "/" },
+  { name: "My Palette", path: "/palette" },
+  { name: "My Collection", path: "/collection" },
+  { name: "Wishlist", path: "/wishlist" },
+  { name: "About Us", path: "/about" },
+];
+
+export default function Navbar({ withBorders = false }) {
+  const NavBarCore = (
+    <nav className="max-w-screen-xl mx-auto px-6">
+      <ul
+        className="flex items-center justify-center gap-8 py-3"
+        role="menubar"
+        aria-label="Primary"
+      >
+        {links.map((l) => (
+          <li key={l.name} role="none">
+            <NavLink
+              to={l.path}
+              role="menuitem"
+              className={({ isActive }) =>
+                [
+                  "text-base font-medium tracking-wide",
+                  "text-neutral-900 hover:underline underline-offset-4",
+                  isActive ? "underline" : "",
+                ].join(" ")
+              }
+            >
+              {l.name}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+
+  if (!withBorders) return NavBarCore;
+
+  // optional variant: navbar renders its own hairlines
   return (
-    <>
-      <nav className="flex items-center justify-between px-6 py-4 bg-pink-50 shadow-sm">
-        {/* Logo + Brand */}
-        <div className="flex items-center space-x-3">
-          <NavLink to="/" className="flex items-center">
-            <img src={logo} className="h-12 w-auto" alt="Colored Logo" />
-          </NavLink>
-        </div>
-
-        {/* Menu */}
-        <ul className="hidden md:flex space-x-4 font-semibold">
-          {[
-            { name: "My Palette", path: "/" },
-            { name: "My Collection", path: "/collection" },
-            { name: "Wishlist", path: "/wishlist" },
-            { name: "About Us", path: "/about" },
-          ].map((link) => (
-            <li key={link.name}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) =>
-                   `inline-flex items-center justify-center px-3 py-3 text-base rounded-full transition shadow-md ${
-                    isActive
-                      ? "bg-pink-600 text-white"
-                      : "bg-white text-pink-700 hover:bg-pink-600 hover:text-white"
-                  }`
-                }
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-
-        {/* Hamburger for mobile */}
-        <div className="md:hidden flex flex-col space-y-1 cursor-pointer">
-          <span className="block h-0.5 w-6 bg-pink-700"></span>
-          <span className="block h-0.5 w-6 bg-pink-700"></span>
-          <span className="block h-0.5 w-6 bg-pink-700"></span>
-        </div>
-      </nav>
-    </>
-  )
+    <div className="w-full">
+      <div className="border-t border-neutral-200" />
+      {NavBarCore}
+      <div className="border-t border-neutral-200" />
+      
+    </div>
+  );
 }
-
-export default Navbar
