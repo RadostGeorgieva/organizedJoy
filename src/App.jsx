@@ -5,6 +5,7 @@ import HomePage from "./pages/HomePage";
 import CollectionPage from "./pages/CollectionPage";
 import { Route, createRoutesFromElements, createBrowserRouter, RouterProvider } from "react-router-dom";
 import { supabase } from './lib/supabase';
+import AuthPage from "./pages/AuthPage";
 import { useEffect } from "react";
 //import "./events.css"; //
 
@@ -19,33 +20,12 @@ const App = () => {
       <Route path='/' element={<MainLayout />}>
         <Route index element={<HomePage />} />
         <Route path='/collection' element={<CollectionPage />} />
+        <Route path='/auth' element={<AuthPage />} />
       </Route>
     )
-  );
-useEffect(() => {
-  const testInsert = async () => {
-    const { data } = await supabase.auth.getUser();
-console.log("Current user:", data.user);
 
 
-
-  };
-
-  testInsert();
-}, []);
-useEffect(() => {
-  const testSelect = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*");
-
-    console.log("Profiles read:", data, error);
-  };
-
-  testSelect();
-}, []);
-
-
+  )
   return (<RouterProvider router={router} />)
 }
 
