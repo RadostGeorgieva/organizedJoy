@@ -2,9 +2,16 @@
 import React from "react";
 
 const ItemCard = ({ item, variant = "default" }) => {
-  const { image, name, category, color, season, brand } = item;
-
   const mono = variant === "mono";
+
+  // --- map both shapes (DB + old JSON) ---
+  const imageUrl = item.image_url || item.image || null;   // API should attach image_url
+  const title    = item.title || item.name || "Untitled";
+  const brand    = item.brand || null;
+  const category = item.category || "";
+  const colorHex = item.color_hex || item?.color?.hex || null;
+  const colorName = item?.color?.name || null;
+  const season   = item.season || null;
 
   return (
     <article
@@ -17,21 +24,28 @@ const ItemCard = ({ item, variant = "default" }) => {
       {/* Image */}
       <div className="relative">
         <div className={mono ? "aspect-[4/5] w-full overflow-hidden bg-neutral-50" : "aspect-[4/5] w-full overflow-hidden bg-pink-50"}>
-          <img
-            src={image}
-            alt={name}
-            className={
-              mono
-                ? "h-full w-full object-cover transition duration-300 hover:scale-105"
-                : "h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            }
-          />
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className={
+                mono
+                  ? "h-full w-full object-cover transition duration-300 hover:scale-105"
+                  : "h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              }
+              loading="lazy"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-neutral-300">
+              <span className="text-xs">No image</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="space-y-1 p-4">
-        <h3 className="truncate text-base font-semibold text-gray-900">{name}</h3>
+        <h3 className="truncate text-base font-semibold text-gray-900">{title}</h3>
         <p className="text-sm text-gray-600">{category}</p>
 
         {/* Meta row */}
@@ -47,6 +61,7 @@ const ItemCard = ({ item, variant = "default" }) => {
               {brand}
             </span>
           )}
+
           {season && (
             <span
               className={
@@ -58,7 +73,8 @@ const ItemCard = ({ item, variant = "default" }) => {
               {season}
             </span>
           )}
-          {color && (
+
+          {(colorHex || colorName) && (
             <span
               className={
                 mono
@@ -68,10 +84,10 @@ const ItemCard = ({ item, variant = "default" }) => {
             >
               <span
                 className="inline-block h-3 w-3 rounded-full ring-1 ring-black/10"
-                style={{ backgroundColor: color.hex || "#eee" }}
+                style={{ backgroundColor: colorHex || "#eee" }}
                 aria-hidden
               />
-              {color.name || "Color"}
+              {colorName || colorHex}
             </span>
           )}
         </div>
