@@ -1,7 +1,8 @@
 // components/ItemCard.jsx
 import React from "react";
 
-const ItemCard = ({ item, variant = "default" }) => {
+const ItemCard = ({ item, variant = "default", onClick  }) => {
+  const clickable = typeof onClick === "function";
   const mono = variant === "mono";
 
   // --- map both shapes (DB + old JSON) ---
@@ -15,6 +16,10 @@ const ItemCard = ({ item, variant = "default" }) => {
 
   return (
     <article
+     role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => { if (clickable && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onClick(); } }}
       className={
         mono
           ? "overflow-hidden bg-white border border-neutral-200"
