@@ -110,8 +110,8 @@ function DetailModal({ item, onClose }) {
 
         <div className="px-4 pb-4 flex justify-end gap-2">
           {/* Placeholder for later actions; safe to leave now or wire later */}
-          {/* <button className="px-3 py-2 rounded-xl border">✏️ Edit</button>
-          <button className="px-3 py-2 rounded-xl border text-red-600 border-red-200">🗑️ Delete</button> */}
+           <button className="px-3 py-2 rounded-xl border">✏️ Edit</button>
+          <button className="px-3 py-2 rounded-xl border text-red-600 border-red-200">🗑️ Delete</button> 
           <button onClick={onClose} className="px-3 py-2 rounded-xl border">Close</button>
         </div>
       </div>
