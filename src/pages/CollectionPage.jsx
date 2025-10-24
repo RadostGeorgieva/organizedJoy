@@ -1,6 +1,7 @@
 // pages/CollectionPage.jsx
 import React, { useEffect, useState } from "react";
 import ItemCard from "../components/ItemCard";
+import DetailsModal from "../components/DetailsModal";
 import { listMyItemsCurrent } from "../api/items"; // <- single API import
 
 export default function CollectionPage() {
@@ -63,96 +64,9 @@ export default function CollectionPage() {
 
       {/* Minimal detail modal */}
       {selected && (
-        <DetailModal item={selected} onClose={() => setSelected(null)} />
+        <DetailsModal item={selected} onClose={() => setSelected(null)} />
       )}
     </main>
   );
 }
 
-/** Lightweight detail modal that just *shows* more fields if they exist. */
-function DetailModal({ item, onClose }) {
-  const title = item.title || item.name || "Item";
-  const imageUrl = item.image_url || item.image || null;
-  const brand = item.brand || "";
-  const category = item.category || "";
-  const colorHex = item.color_hex || item?.color?.hex || null;
-  const colorName = item?.color?.name || item.color || null;
-  const season = item.season || "";
-  const size = item.size ?? item.size_label ?? "";
-  const price = item.price ?? item.cost ?? "";
-  const purchasedAt = item.purchased_at ?? item.purchaseDate ?? "";
-  const notes = item.notes ?? "";
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 p-0 sm:p-6 flex items-end sm:items-center justify-center">
-      <div className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-2xl leading-none px-2">×</button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 sm:gap-6 p-4">
-          {/* Left: image */}
-          <div className="aspect-[4/5] bg-neutral-50 overflow-hidden">
-            {imageUrl ? (
-              <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-neutral-300 text-sm">No image</div>
-            )}
-          </div>
-
-          {/* Right: details */}
-          <div className="space-y-3">
-            <Row label="Brand" value={brand} />
-            <Row label="Category" value={category} />
-            <Row label="Color" value={colorName || colorHex} swatch={colorHex} />
-            <Row label="Season" value={season} />
-            <Row label="Size" value={size} />
-            <Row label="Price" value={formatPrice(price)} />
-            <Row label="Purchased" value={formatDateLong(purchasedAt)} />
-            {notes && (
-              <div>
-                <div className="text-xs text-neutral-500 mb-1">Notes</div>
-                <p className="text-sm text-neutral-800 whitespace-pre-wrap">{notes}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 pb-4 flex justify-end gap-2">
-          {/* Placeholder for later actions; safe to leave now or wire later */}
-          <button className="px-3 py-2 rounded-xl border">✏️ Edit</button>
-          <button className="px-3 py-2 rounded-xl border text-red-600 border-red-200">🗑️ Delete</button>
-          <button onClick={onClose} className="px-3 py-2 rounded-xl border">Close</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Row({ label, value, swatch }) {
-  if (!value && !swatch) return null;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="text-xs text-neutral-500 w-24">{label}</div>
-      <div className="text-sm text-neutral-900 flex items-center gap-2">
-        {swatch && <span className="inline-block h-3 w-3 rounded-full ring-1 ring-black/10" style={{ backgroundColor: swatch }} />}
-        <span>{value}</span>
-      </div>
-    </div>
-  );
-}
-
-function formatPrice(v) {
-  if (v == null || v === "") return "";
-  const n = Number(v);
-  if (Number.isFinite(n)) return new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR", currencyDisplay: "narrowSymbol" }).format(n);
-  return String(v);
-}
-function formatDateLong(d) {
-  if (!d) return "";
-  try {
-    const dt = typeof d === "string" ? new Date(d) : d;
-    return dt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-  } catch { return String(d); }
-}
