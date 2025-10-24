@@ -31,8 +31,8 @@ export default function CollectionPage() {
       <div className="border-t border-neutral-200 mb-6" />
 
       {state === "loading" && <div className="text-neutral-600">Loading…</div>}
-      {state === "anon"    && <div className="text-neutral-600">Please sign in to view your collection.</div>}
-      {state === "error"   && <div className="text-red-600">Couldn’t load items.</div>}
+      {state === "anon" && <div className="text-neutral-600">Please sign in to view your collection.</div>}
+      {state === "error" && <div className="text-red-600">Couldn’t load items.</div>}
 
       {state === "ready" && (
         items.length === 0 ? (
@@ -46,6 +46,17 @@ export default function CollectionPage() {
                 <ItemCard item={it} variant="mono" onClick={() => setSelected(it)} />
               </div>
             ))}
+            {/* Add Item Card */}
+            <button
+              onClick={() => setSelected({ isNew: true })}
+              className="aspect-[4/5] border border-dashed border-neutral-300 hover:border-neutral-400 
+               flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-700 
+               transition rounded-xl"
+            >
+              <span className="text-5xl mb-1">＋</span>
+              <span className="text-sm font-medium">Add Item</span>
+            </button>
+
           </section>
         )
       )}
@@ -60,17 +71,17 @@ export default function CollectionPage() {
 
 /** Lightweight detail modal that just *shows* more fields if they exist. */
 function DetailModal({ item, onClose }) {
-  const title       = item.title || item.name || "Item";
-  const imageUrl    = item.image_url || item.image || null;
-  const brand       = item.brand || "";
-  const category    = item.category || "";
-  const colorHex    = item.color_hex || item?.color?.hex || null;
-  const colorName   = item?.color?.name || item.color || null;
-  const season      = item.season || "";
-  const size        = item.size ?? item.size_label ?? "";
-  const price       = item.price ?? item.cost ?? "";
+  const title = item.title || item.name || "Item";
+  const imageUrl = item.image_url || item.image || null;
+  const brand = item.brand || "";
+  const category = item.category || "";
+  const colorHex = item.color_hex || item?.color?.hex || null;
+  const colorName = item?.color?.name || item.color || null;
+  const season = item.season || "";
+  const size = item.size ?? item.size_label ?? "";
+  const price = item.price ?? item.cost ?? "";
   const purchasedAt = item.purchased_at ?? item.purchaseDate ?? "";
-  const notes       = item.notes ?? "";
+  const notes = item.notes ?? "";
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 p-0 sm:p-6 flex items-end sm:items-center justify-center">
@@ -110,8 +121,8 @@ function DetailModal({ item, onClose }) {
 
         <div className="px-4 pb-4 flex justify-end gap-2">
           {/* Placeholder for later actions; safe to leave now or wire later */}
-           <button className="px-3 py-2 rounded-xl border">✏️ Edit</button>
-          <button className="px-3 py-2 rounded-xl border text-red-600 border-red-200">🗑️ Delete</button> 
+          <button className="px-3 py-2 rounded-xl border">✏️ Edit</button>
+          <button className="px-3 py-2 rounded-xl border text-red-600 border-red-200">🗑️ Delete</button>
           <button onClick={onClose} className="px-3 py-2 rounded-xl border">Close</button>
         </div>
       </div>
