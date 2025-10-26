@@ -24,7 +24,10 @@ export default function DetailsModal({ item, onClose }) {
 
         {/* Body */}
         {isNew ? (
-          <AddItemForm onClose={onClose} />
+          <AddItemForm onClose={onClose}
+          onCreated={(newItem) => {
+    // lift this up however you structure DetailsModal
+  }} />
         ) : (
           <ExistingItemDetails item={item} />
         )}

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { createItem } from "../api/items";
 
-export default function AddItemForm({ onClose }) {
+export default function AddItemForm({ onClose, onCreated  }) {
   const [form, setForm] = useState({
     title: "",
     brand: "",
@@ -42,7 +43,7 @@ export default function AddItemForm({ onClose }) {
       return;
     }
 
-    const newRow = {
+    const payload  = {
       user_id: user.id,
       title: form.title || null,
       brand: form.brand || null,
@@ -54,20 +55,22 @@ export default function AddItemForm({ onClose }) {
       notes: form.notes || null,
       is_public: form.is_public,
     };
+ // 3. insert via helper
+    try {
+      const newItem = await createItem(user.id, payload);
 
-    const { data, error } = await supabase
-      .from("items")
-      .insert(newRow)
-      .select()
-      .single();
+      // 4. tell parent so it can update list without re-fetch
+      if (onCreated) {
+        onCreated(newItem);
+      }
 
-    if (error) {
-      console.error(error);
+      setSaving(false);
+      onClose(); // close modal
+    } catch (err) {
+      console.error(err);
       setSaving(false);
       setErrorMsg("Could not save item.");
-      return;
     }
-
     setSaving(false);
     onClose();
   }

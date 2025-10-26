@@ -122,7 +122,11 @@ export default function CollectionPage() {
 
       {/* Modal */}
       {selected && (
-        <DetailsModal item={selected} onClose={() => setSelected(null)} />
+        <DetailsModal item={selected} onClose={() => setSelected(null)}
+          onCreated={(newItem) => {
+            // prepend the newly created item to the list in state
+            setItems((prev) => [newItem, ...prev]);
+          }} />
       )}
     </main>
   );
