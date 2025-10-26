@@ -36,37 +36,39 @@ export default function CollectionPage() {
       {state === "error" && <div className="text-red-600">Couldn’t load items.</div>}
 
       {state === "ready" && (
-        items.length === 0 ? (
-          <div className="border border-dashed border-neutral-300 p-10 text-center text-neutral-500">
-            No items yet.
-          </div>
-        ) : (
+        <>
+          {items.length === 0 && (
+            <div className="border border-dashed border-neutral-300 p-10 text-center text-neutral-500 mb-6">
+              No items yet.
+            </div>
+          )}
+
           <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((it) => (
               <div key={it.id} className="relative">
                 <ItemCard item={it} variant="mono" onClick={() => setSelected(it)} />
               </div>
             ))}
-            {/* Add Item Card */}
+
+            {/* Always visible Add Item Card */}
             <button
               onClick={() => setSelected({ isNew: true })}
               className="aspect-[4/5] border border-dashed border-neutral-300 hover:border-neutral-400 
-               flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-700 
-               transition rounded-xl"
+             flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-700 
+             transition rounded-xl"
             >
               <span className="text-5xl mb-1">＋</span>
               <span className="text-sm font-medium">Add Item</span>
             </button>
-
           </section>
-        )
+        </>
       )}
 
-      {/* Minimal detail modal */}
       {selected && (
         <DetailsModal item={selected} onClose={() => setSelected(null)} />
       )}
     </main>
   );
 }
+
 
