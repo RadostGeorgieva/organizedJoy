@@ -62,7 +62,20 @@ export async function listMyItemsCurrent(): Promise<ItemRow[]> {
   return listMyItems(userId); // single DB request
 }
 
+export async function updateItem(
+  itemId: string,
+  patch: Partial<ItemInsert> // fields you want to change
+): Promise<ItemRow> {
+  const { data, error } = await supabase
+    .from("items")
+    .update(patch)
+    .eq("id", itemId)
+    .select()
+    .single();
 
+  if (error) throw error;
+  return data!;
+}
 
 // Optional helper: constrain category literals in your UI
 export const CATEGORIES: ItemCategory[] = [

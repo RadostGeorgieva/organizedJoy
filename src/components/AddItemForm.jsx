@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { createItem } from "../api/items";
+import { createItem, updateItem, CATEGORIES } from "../api/items";
 
-export default function AddItemForm({ onClose, onCreated  }) {
+export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem }) {
   const [form, setForm] = useState({
     title: "",
     brand: "",
-    category: "",
+    category: "top",
     color_hex: "",
     size: "",
     price: "",
@@ -17,6 +17,22 @@ export default function AddItemForm({ onClose, onCreated  }) {
 
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // prefill on open (edit mode)
+  useEffect(() => {
+    if (!initialItem) return;
+    setForm({
+      title: initialItem.title || "",
+      brand: initialItem.brand || "",
+      category: initialItem.category || "",
+      color_hex: initialItem.color_hex || "",
+      size: initialItem.size || "",
+      price: initialItem.price != null ? String(initialItem.price) : "",
+      purchase_date: initialItem.purchase_date || "",
+      notes: initialItem.notes || "",
+      is_public: !!initialItem.is_public,
+    });
+  }, [initialItem]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -31,7 +47,7 @@ export default function AddItemForm({ onClose, onCreated  }) {
     setSaving(true);
     setErrorMsg("");
 
-    // get logged in user for user_id
+    // get logged in user for create case
     const {
       data: { user },
       error: userErr,
@@ -43,7 +59,7 @@ export default function AddItemForm({ onClose, onCreated  }) {
       return;
     }
 
-    const payload  = {
+    const payload = {
       user_id: user.id,
       title: form.title || null,
       brand: form.brand || null,
@@ -55,24 +71,26 @@ export default function AddItemForm({ onClose, onCreated  }) {
       notes: form.notes || null,
       is_public: form.is_public,
     };
- // 3. insert via helper
+    // 3. insert via helper
     try {
-      const newItem = await createItem(user.id, payload);
-
-      // 4. tell parent so it can update list without re-fetch
-      if (onCreated) {
-        onCreated(newItem);
+      let saved;
+      if (initialItem && initialItem.id) {
+        // EDIT EXISTING
+        saved = await updateItem(initialItem.id, payload);
+        if (onUpdated) onUpdated(saved);
+      } else {
+        // CREATE NEW
+        saved = await createItem(user.id, payload);
+        if (onCreated) onCreated(saved);
       }
 
       setSaving(false);
-      onClose(); // close modal
+      onClose();
     } catch (err) {
       console.error(err);
       setSaving(false);
       setErrorMsg("Could not save item.");
     }
-    setSaving(false);
-    onClose();
   }
 
   return (
@@ -111,165 +129,172 @@ export default function AddItemForm({ onClose, onCreated  }) {
           <label className="block text-xs text-neutral-500 mb-1">
             Category
           </label>
-          <input
+
+          <select
             name="category"
             value={form.category}
             onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            placeholder="jacket / jeans / boots…"
-          />
+            required
+            className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Color picker + Size */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Color block */}
-        <div>
-          <label className="block text-xs text-neutral-500 mb-1">
-            Color
-          </label>
+        {/* Color picker + Size */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Color block */}
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">
+              Color
+            </label>
 
-          <div className="flex items-center gap-3">
-            {/* Visual picker */}
-            <input
-              type="color"
-              name="color_hex_picker"
-              value={form.color_hex || "#000000"}
-              onChange={(e) => {
-                const val = e.target.value;
-                setForm((prev) => ({ ...prev, color_hex: val }));
-              }}
-              className="h-10 w-10 rounded-lg border border-neutral-300 p-0 cursor-pointer"
-              title="Pick color"
-            />
-
-            {/* Hex text */}
-            <input
-              name="color_hex"
-              value={form.color_hex}
-              onChange={(e) => {
-                let val = e.target.value.trim();
-                if (val && !val.startsWith("#")) {
-                  val = "#" + val;
-                }
-                if (
-                  val === "" ||
-                  /^#[0-9a-fA-F]{0,6}$/.test(val)
-                ) {
+            <div className="flex items-center gap-3">
+              {/* Visual picker */}
+              <input
+                type="color"
+                name="color_hex_picker"
+                value={form.color_hex || "#000000"}
+                onChange={(e) => {
+                  const val = e.target.value;
                   setForm((prev) => ({ ...prev, color_hex: val }));
-                }
-              }}
-              className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono"
-              placeholder="#2b1b18"
-              maxLength={7}
+                }}
+                className="h-10 w-10 rounded-lg border border-neutral-300 p-0 cursor-pointer"
+                title="Pick color"
+              />
+
+              {/* Hex text */}
+              <input
+                name="color_hex"
+                value={form.color_hex}
+                onChange={(e) => {
+                  let val = e.target.value.trim();
+                  if (val && !val.startsWith("#")) {
+                    val = "#" + val;
+                  }
+                  if (
+                    val === "" ||
+                    /^#[0-9a-fA-F]{0,6}$/.test(val)
+                  ) {
+                    setForm((prev) => ({ ...prev, color_hex: val }));
+                  }
+                }}
+                className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono"
+                placeholder="#2b1b18"
+                maxLength={7}
+              />
+            </div>
+
+            <p className="text-[10px] text-neutral-400 mt-1">
+              Use picker or paste hex (#RRGGBB).
+            </p>
+          </div>
+
+          {/* Size */}
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">
+              Size
+            </label>
+            <input
+              name="size"
+              value={form.size}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              placeholder="S / 38 / 28W"
+            />
+          </div>
+        </div>
+
+        {/* Price + Purchase Date */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">
+              Price
+            </label>
+            <input
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              placeholder="59.99"
+              inputMode="decimal"
             />
           </div>
 
-          <p className="text-[10px] text-neutral-400 mt-1">
-            Use picker or paste hex (#RRGGBB).
-          </p>
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">
+              Purchase Date
+            </label>
+            <input
+              type="date"
+              name="purchase_date"
+              value={form.purchase_date}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
         </div>
 
-        {/* Size */}
+        {/* Notes */}
         <div>
           <label className="block text-xs text-neutral-500 mb-1">
-            Size
+            Notes
           </label>
-          <input
-            name="size"
-            value={form.size}
+          <textarea
+            name="notes"
+            value={form.notes}
             onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            placeholder="S / 38 / 28W"
-          />
-        </div>
-      </div>
-
-      {/* Price + Purchase Date */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs text-neutral-500 mb-1">
-            Price
-          </label>
-          <input
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            placeholder="59.99"
-            inputMode="decimal"
+            className="w-full border rounded-lg px-3 py-2 text-sm min-h-[70px]"
+            placeholder="Fits amazing with the brown boots / dry clean only / etc"
           />
         </div>
 
-        <div>
-          <label className="block text-xs text-neutral-500 mb-1">
-            Purchase Date
-          </label>
+        {/* Public toggle */}
+        <div className="flex items-center gap-2">
           <input
-            type="date"
-            name="purchase_date"
-            value={form.purchase_date}
+            id="is_public"
+            name="is_public"
+            type="checkbox"
+            checked={form.is_public}
             onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm"
+            className="h-4 w-4 rounded border-neutral-300 text-black"
           />
+          <label
+            htmlFor="is_public"
+            className="text-xs text-neutral-600 select-none"
+          >
+            Public (can be visible/shared)
+          </label>
         </div>
-      </div>
 
-      {/* Notes */}
-      <div>
-        <label className="block text-xs text-neutral-500 mb-1">
-          Notes
-        </label>
-        <textarea
-          name="notes"
-          value={form.notes}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-3 py-2 text-sm min-h-[70px]"
-          placeholder="Fits amazing with the brown boots / dry clean only / etc"
-        />
-      </div>
+        {/* Error */}
+        {errorMsg && (
+          <div className="text-sm text-red-600">{errorMsg}</div>
+        )}
 
-      {/* Public toggle */}
-      <div className="flex items-center gap-2">
-        <input
-          id="is_public"
-          name="is_public"
-          type="checkbox"
-          checked={form.is_public}
-          onChange={handleChange}
-          className="h-4 w-4 rounded border-neutral-300 text-black"
-        />
-        <label
-          htmlFor="is_public"
-          className="text-xs text-neutral-600 select-none"
-        >
-          Public (can be visible/shared)
-        </label>
-      </div>
-
-      {/* Error */}
-      {errorMsg && (
-        <div className="text-sm text-red-600">{errorMsg}</div>
-      )}
-
-      {/* Actions */}
-      <div className="flex justify-end gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={saving}
-          className="px-3 py-2 rounded-xl border"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={saving}
-          className="px-3 py-2 rounded-xl bg-black text-white disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save"}
-        </button>
-      </div>
+        {/* Actions */}
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="px-3 py-2 rounded-xl border"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-3 py-2 rounded-xl bg-black text-white disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
     </form>
   );
 }
