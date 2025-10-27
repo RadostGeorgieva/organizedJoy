@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { createItem, updateItem, CATEGORIES } from "../api/items";
+import { createItem, updateItem, uploadWardrobeImage, CATEGORIES } from "../api/items";
 
 export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem }) {
   const [form, setForm] = useState({
@@ -14,6 +14,9 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
     notes: "",
     is_public: false,
   });
+
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,6 +35,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       notes: initialItem.notes || "",
       is_public: !!initialItem.is_public,
     });
+    if (initialItem.image_url) setPreviewUrl(initialItem.image_url);
   }, [initialItem]);
 
   function handleChange(e) {
@@ -40,6 +44,13 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  }
+  function handleFileChange(e) {
+    const f = e.target.files?.[0];
+    if (f) {
+      setFile(f);
+      setPreviewUrl(URL.createObjectURL(f));
+    }
   }
 
   async function handleSubmit(e) {
@@ -59,6 +70,15 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       return;
     }
 
+     try {
+      let cover_path = initialItem?.cover_path || null;
+
+      // ⬇️ Upload image if chosen
+      if (file) {
+        cover_path = await uploadWardrobeImage(user.id, file);
+      }
+
+
     const payload = {
       user_id: user.id,
       title: form.title || null,
@@ -70,9 +90,9 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       purchase_date: form.purchase_date || null,
       notes: form.notes || null,
       is_public: form.is_public,
+      cover_path,
     };
-    // 3. insert via helper
-    try {
+
       let saved;
       if (initialItem && initialItem.id) {
         // EDIT EXISTING
@@ -146,155 +166,168 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
         </div>
       </div>
 
-        {/* Color picker + Size */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Color block */}
-          <div>
-            <label className="block text-xs text-neutral-500 mb-1">
-              Color
-            </label>
-
-            <div className="flex items-center gap-3">
-              {/* Visual picker */}
-              <input
-                type="color"
-                name="color_hex_picker"
-                value={form.color_hex || "#000000"}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setForm((prev) => ({ ...prev, color_hex: val }));
-                }}
-                className="h-10 w-10 rounded-lg border border-neutral-300 p-0 cursor-pointer"
-                title="Pick color"
-              />
-
-              {/* Hex text */}
-              <input
-                name="color_hex"
-                value={form.color_hex}
-                onChange={(e) => {
-                  let val = e.target.value.trim();
-                  if (val && !val.startsWith("#")) {
-                    val = "#" + val;
-                  }
-                  if (
-                    val === "" ||
-                    /^#[0-9a-fA-F]{0,6}$/.test(val)
-                  ) {
-                    setForm((prev) => ({ ...prev, color_hex: val }));
-                  }
-                }}
-                className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono"
-                placeholder="#2b1b18"
-                maxLength={7}
-              />
-            </div>
-
-            <p className="text-[10px] text-neutral-400 mt-1">
-              Use picker or paste hex (#RRGGBB).
-            </p>
-          </div>
-
-          {/* Size */}
-          <div>
-            <label className="block text-xs text-neutral-500 mb-1">
-              Size
-            </label>
-            <input
-              name="size"
-              value={form.size}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              placeholder="S / 38 / 28W"
-            />
-          </div>
-        </div>
-
-        {/* Price + Purchase Date */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-neutral-500 mb-1">
-              Price
-            </label>
-            <input
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              placeholder="59.99"
-              inputMode="decimal"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-neutral-500 mb-1">
-              Purchase Date
-            </label>
-            <input
-              type="date"
-              name="purchase_date"
-              value={form.purchase_date}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-
-        {/* Notes */}
+      {/* Color picker + Size */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Color block */}
         <div>
           <label className="block text-xs text-neutral-500 mb-1">
-            Notes
+            Color
           </label>
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm min-h-[70px]"
-            placeholder="Fits amazing with the brown boots / dry clean only / etc"
-          />
+
+          <div className="flex items-center gap-3">
+            {/* Visual picker */}
+            <input
+              type="color"
+              name="color_hex_picker"
+              value={form.color_hex || "#000000"}
+              onChange={(e) => {
+                const val = e.target.value;
+                setForm((prev) => ({ ...prev, color_hex: val }));
+              }}
+              className="h-10 w-10 rounded-lg border border-neutral-300 p-0 cursor-pointer"
+              title="Pick color"
+            />
+
+            {/* Hex text */}
+            <input
+              name="color_hex"
+              value={form.color_hex}
+              onChange={(e) => {
+                let val = e.target.value.trim();
+                if (val && !val.startsWith("#")) {
+                  val = "#" + val;
+                }
+                if (
+                  val === "" ||
+                  /^#[0-9a-fA-F]{0,6}$/.test(val)
+                ) {
+                  setForm((prev) => ({ ...prev, color_hex: val }));
+                }
+              }}
+              className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono"
+              placeholder="#2b1b18"
+              maxLength={7}
+            />
+          </div>
+
+          <p className="text-[10px] text-neutral-400 mt-1">
+            Use picker or paste hex (#RRGGBB).
+          </p>
         </div>
 
-        {/* Public toggle */}
-        <div className="flex items-center gap-2">
+        {/* Size */}
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">
+            Size
+          </label>
           <input
-            id="is_public"
-            name="is_public"
-            type="checkbox"
-            checked={form.is_public}
+            name="size"
+            value={form.size}
             onChange={handleChange}
-            className="h-4 w-4 rounded border-neutral-300 text-black"
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="S / 38 / 28W"
           />
-          <label
-            htmlFor="is_public"
-            className="text-xs text-neutral-600 select-none"
-          >
-            Public (can be visible/shared)
+        </div>
+      </div>
+
+      {/* Price + Purchase Date */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">
+            Price
           </label>
+          <input
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="59.99"
+            inputMode="decimal"
+          />
         </div>
 
-        {/* Error */}
-        {errorMsg && (
-          <div className="text-sm text-red-600">{errorMsg}</div>
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">
+            Purchase Date
+          </label>
+          <input
+            type="date"
+            name="purchase_date"
+            value={form.purchase_date}
+            onChange={handleChange}
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">
+          Notes
+        </label>
+        <textarea
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          className="w-full border rounded-lg px-3 py-2 text-sm min-h-[70px]"
+          placeholder="Fits amazing with the brown boots / dry clean only / etc"
+        />
+      </div>
+
+      {/* Image Upload */}
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">Photo</label>
+        <input type="file" accept="image/*" onChange={handleFileChange} />
+        {previewUrl && (
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="mt-2 h-32 w-auto rounded-lg border border-neutral-200 object-cover"
+          />
         )}
+      </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="px-3 py-2 rounded-xl border"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-3 py-2 rounded-xl bg-black text-white disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
+      {/* Public toggle */}
+      <div className="flex items-center gap-2">
+        <input
+          id="is_public"
+          name="is_public"
+          type="checkbox"
+          checked={form.is_public}
+          onChange={handleChange}
+          className="h-4 w-4 rounded border-neutral-300 text-black"
+        />
+        <label
+          htmlFor="is_public"
+          className="text-xs text-neutral-600 select-none"
+        >
+          Public (can be visible/shared)
+        </label>
+      </div>
+
+      {/* Error */}
+      {errorMsg && (
+        <div className="text-sm text-red-600">{errorMsg}</div>
+      )}
+
+      {/* Actions */}
+      <div className="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={saving}
+          className="px-3 py-2 rounded-xl border"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving}
+          className="px-3 py-2 rounded-xl bg-black text-white disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
     </form>
   );
 }
