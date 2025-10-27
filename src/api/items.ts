@@ -76,6 +76,15 @@ export async function updateItem(
   if (error) throw error;
   return data!;
 }
+export async function deleteItem(itemId: string): Promise<void> {
+  const { error } = await supabase
+    .from("items")
+    .delete()
+    .eq("id", itemId);
+
+  if (error) throw error;
+}
+
 
 // Optional helper: constrain category literals in your UI
 export const CATEGORIES: ItemCategory[] = [

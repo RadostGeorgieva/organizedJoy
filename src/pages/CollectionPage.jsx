@@ -121,13 +121,33 @@ export default function CollectionPage() {
       )}
 
       {/* Modal */}
-      {selected && (
-        <DetailsModal item={selected} onClose={() => setSelected(null)}
-          onCreated={(newItem) => {
-            // prepend the newly created item to the list in state
-            setItems((prev) => [newItem, ...prev]);
-          }} />
-      )}
+{selected && (
+  <DetailsModal
+    item={selected}
+    onClose={() => setSelected(null)}
+    onCreated={(newItem) => {
+      // 1) add new item to list
+      setItems((prev) => [newItem, ...prev]);
+      // 2) close modal after create
+      setSelected(null);
+    }}
+    onUpdated={(savedItem) => {
+      // merge updated item back into state
+      setItems((prev) =>
+        prev.map((it) => (it.id === savedItem.id ? savedItem : it))
+      );
+      // also update what's open in the modal so UI shows new title etc without closing
+      setSelected(savedItem);
+    }}
+    onDeleted={(deletedId) => {
+      // remove from list
+      setItems((prev) => prev.filter((it) => it.id !== deletedId));
+      // close modal
+      setSelected(null);
+    }}
+  />
+)}
+
     </main>
   );
 }
