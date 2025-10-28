@@ -148,11 +148,6 @@ export default function CollectionPage() {
                           </span>
                         </h2>
                       </div>
-
-                      <AddButton
-                        label={`Add ${label.slice(0, -1) || "item"}`}
-                        presetCategory={catKey}
-                      />
                     </div>
 
                     {/* Cards grid for this category */}
