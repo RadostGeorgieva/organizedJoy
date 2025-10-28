@@ -99,12 +99,7 @@ export default function DetailsModal({ item, onClose, onCreated, onUpdated, onDe
             </button>
           </div>
         )}
-        {/* When editing an existing item, show a simple footer with Cancel */}
-        {isEditing && !isNew && (
-          <div className="px-4 pb-4 flex justify-end gap-2 text-[12px] text-neutral-500">
-            <span>Editing…</span>
-          </div>
-        )}
+
       </div>
     </div>
   );

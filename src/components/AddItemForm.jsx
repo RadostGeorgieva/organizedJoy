@@ -275,19 +275,55 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       </div>
 
       {/* Image Upload */}
-      <div>
-        <label className="block text-xs text-neutral-500 mb-1">Photo</label>
-        <input type="file" accept="image/*" onChange={handleFileChange} />
-        {previewUrl && (
-          <img
-            src={previewUrl}
-            alt="Preview"
-            className="mt-2 h-32 w-auto rounded-lg border border-neutral-200 object-cover"
-          />
-        )}
+ <div>
+        <label className="block text-xs text-neutral-500 mb-1">
+          Item Photo
+        </label>
+
+        <div className="flex items-start gap-4">
+          {/* Preview (if any) */}
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Item preview"
+              className="h-32 w-24 rounded-lg border border-neutral-200 object-cover bg-neutral-50 flex-shrink-0"
+            />
+          ) : (
+            <div className="h-32 w-24 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 text-[11px] text-neutral-400 flex items-center justify-center flex-shrink-0">
+              No photo
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {/* Fake button -> triggers hidden file input */}
+            <button
+              type="button"
+              onClick={() => {
+                // click the hidden file input
+                document.getElementById("file-input-hidden")?.click();
+              }}
+              className="px-3 py-2 rounded-xl border text-sm hover:bg-neutral-50"
+            >
+              {previewUrl ? "Change photo" : "Add photo"}
+            </button>
+
+            <p className="text-[11px] text-neutral-400 leading-snug">
+              This will be the cover image in your wardrobe.
+            </p>
+
+            {/* Real hidden input */}
+            <input
+              id="file-input-hidden"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Public toggle */}
+        {/* Public toggle */}
       <div className="flex items-center gap-2">
         <input
           id="is_public"
@@ -301,7 +337,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
           htmlFor="is_public"
           className="text-xs text-neutral-600 select-none"
         >
-          Public (can be visible/shared)
+          Public (others can see this item)
         </label>
       </div>
 
