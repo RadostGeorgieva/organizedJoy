@@ -290,7 +290,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
             />
           ) : (
             <div className="h-32 w-24 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 text-[11px] text-neutral-400 flex items-center justify-center flex-shrink-0">
-              No photo
+              No image selected
             </div>
           )}
 

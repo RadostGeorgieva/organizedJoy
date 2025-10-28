@@ -1,18 +1,18 @@
 // pages/CollectionPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import ItemCard from "../components/ItemCard";
 import DetailsModal from "../components/DetailsModal";
-import { listMyItemsCurrent } from "../api/items"; // <- single API import
+import { listMyItemsCurrent } from "../api/items";
 
 export default function CollectionPage() {
   const [items, setItems] = useState([]);
   const [state, setState] = useState("loading"); // "loading" | "ready" | "anon" | "error"
-  const [selected, setSelected] = useState(null); // modal target
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const rows = await listMyItemsCurrent(); // <- ONE call
+        const rows = await listMyItemsCurrent();
         setItems(rows);
         setState("ready");
       } catch (e) {
@@ -26,7 +26,38 @@ export default function CollectionPage() {
     })();
   }, []);
 
-  // Reusable CTA button (black by default, invert on hover)
+  const CATEGORY_ORDER = [
+    "top",
+    "bottom",
+    "outerwear",
+    "dress",
+    "shoes",
+    "bag",
+    "accessories",
+    "other",
+  ];
+
+  const CATEGORY_LABELS = {
+    top: "Tops",
+    bottom: "Bottoms",
+    outerwear: "Outerwear",
+    dress: "Dresses",
+    shoes: "Shoes",
+    bag: "Bags",
+    accessories: "Accessories",
+    other: "Other",
+  };
+
+  const itemsByCategory = useMemo(() => {
+    const map = {};
+    for (const it of items) {
+      const cat = it.category || "other";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(it);
+    }
+    return map;
+  }, [items]);
+
   function AddButton({ label }) {
     return (
       <button
@@ -78,7 +109,7 @@ export default function CollectionPage() {
 
       {state === "ready" && (
         <>
-          {/* CASE 1: no items yet */}
+          {/*  no items yet */}
           {items.length === 0 && (
             <section className="mb-10 flex justify-center">
               <div className="border border-neutral-200 rounded-xl p-10 text-center max-w-md bg-neutral-50/50 shadow-sm">
@@ -98,22 +129,51 @@ export default function CollectionPage() {
           {/* CASE 2: user already has items */}
           {items.length > 0 && (
             <>
-              {/* items grid */}
-              <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-10">
-                {items.map((it) => (
-                  <div key={it.id} className="relative">
-                    <ItemCard
-                      item={it}
-                      variant="mono"
-                      onClick={() => setSelected(it)}
-                    />
-                  </div>
-                ))}
-              </section>
+              {CATEGORY_ORDER.map((catKey) => {
+                const group = itemsByCategory[catKey] || [];
+                if (group.length === 0) return null; // skip empty categories
 
-              {/* centered CTA under the grid */}
+                const label =
+                  CATEGORY_LABELS[catKey] || catKey[0].toUpperCase() + catKey.slice(1);
+
+                return (
+                  <section key={catKey} className="mb-12">
+                    {/* Section header row */}
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-4">
+                      <div className="mb-2 sm:mb-0">
+                        <h2 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
+                          <span>{label}</span>
+                          <span className="text-neutral-400 text-sm font-normal">
+                            ({group.length})
+                          </span>
+                        </h2>
+                      </div>
+
+                      <AddButton
+                        label={`Add ${label.slice(0, -1) || "item"}`}
+                        presetCategory={catKey}
+                      />
+                    </div>
+
+                    {/* Cards grid for this category */}
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {group.map((it) => (
+                        <div key={it.id} className="relative">
+                          <ItemCard
+                            item={it}
+                            variant="mono"
+                            onClick={() => setSelected(it)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+
+              {/* Global add at bottom if you still want it */}
               <div className="flex justify-center">
-                <AddButton label="Add another treasure" />
+                <AddButton label="Add another item" />
               </div>
             </>
           )}
@@ -121,32 +181,27 @@ export default function CollectionPage() {
       )}
 
       {/* Modal */}
-{selected && (
-  <DetailsModal
-    item={selected}
-    onClose={() => setSelected(null)}
-    onCreated={(newItem) => {
-      // 1) add new item to list
-      setItems((prev) => [newItem, ...prev]);
-      // 2) close modal after create
-      setSelected(null);
-    }}
-    onUpdated={(savedItem) => {
-      // merge updated item back into state
-      setItems((prev) =>
-        prev.map((it) => (it.id === savedItem.id ? savedItem : it))
-      );
-      // also update what's open in the modal so UI shows new title etc without closing
-      setSelected(savedItem);
-    }}
-    onDeleted={(deletedId) => {
-      // remove from list
-      setItems((prev) => prev.filter((it) => it.id !== deletedId));
-      // close modal
-      setSelected(null);
-    }}
-  />
-)}
+      {selected && (
+        <DetailsModal
+          item={selected}
+          onClose={() => setSelected(null)}
+          onCreated={(newItem) => {
+            setItems((prev) => [newItem, ...prev]);
+            setSelected(null);
+          }}
+          onUpdated={(savedItem) => {
+            setItems((prev) =>
+              prev.map((it) => (it.id === savedItem.id ? savedItem : it))
+            ); setSelected(savedItem);
+          }}
+          onDeleted={(deletedId) => {
+
+            setItems((prev) => prev.filter((it) => it.id !== deletedId));
+
+            setSelected(null);
+          }}
+        />
+      )}
 
     </main>
   );
