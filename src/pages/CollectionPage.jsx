@@ -154,6 +154,7 @@ export default function CollectionPage() {
         </section>
 
         {/* Right-side floating Add (noticeable) */}
+        {state === "ready" && (
         <button
           onClick={() => setSelected({ isNew: true })}
           aria-label="Add item"
@@ -175,7 +176,9 @@ export default function CollectionPage() {
           <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/30 text-xl leading-none">＋</span>
           <span className="font-semibold tracking-wide">Add item</span>
         </button>
+        )}
       </div>
+      
 
       {/* Modal */}
       {selected && (
