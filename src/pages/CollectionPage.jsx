@@ -2,29 +2,43 @@
 import React, { useEffect, useState, useMemo } from "react";
 import ItemCard from "../components/ItemCard";
 import DetailsModal from "../components/DetailsModal";
+import { supabase } from "../lib/supabase";
 import { listMyItemsCurrent } from "../api/items";
 
 export default function CollectionPage() {
   const [items, setItems] = useState([]);
   const [state, setState] = useState("loading"); // "loading" | "ready" | "anon" | "error"
   const [selected, setSelected] = useState(null);
-
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+
+    async function load() {
       try {
-        const rows = await listMyItemsCurrent();
-        setItems(rows);
-        setState("ready");
-      } catch (e) {
-        if ((e?.message || "").includes("Not signed in")) {
-          setState("anon");
-        } else {
-          console.error(e);
-          setState("error");
+        const rows = await listMyItemsCurrent(); // returns ItemView with image_url
+        if (!cancelled) {
+          setItems(rows);
+          setState("ready");
         }
+      } catch (e) {
+        if ((e?.message || "").includes("Not signed in")) setState("anon");
+        else { console.error(e); setState("error"); }
       }
-    })();
+    }
+
+    load(); // initial
+
+    // re-fetch when auth changes (login/logout)
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      setState("loading");
+      load();
+    });
+
+    return () => {
+      cancelled = true;
+      sub?.subscription?.unsubscribe?.();
+    };
   }, []);
+
 
   const CATEGORY_ORDER = [
     "top",
@@ -80,90 +94,91 @@ export default function CollectionPage() {
   }
 
   return (
-  <main
-    className="max-w-screen-xl mx-auto px-6 pt-12 pb-24"
-    style={{ fontFamily: '"Playfair Display", serif' }}
-  >
-    <div className="grid grid-cols-1 sm:grid-cols-[1fr,180px] gap-8">
-      {/* LEFT: content */}
-      <section>
-        {/* header */}
-        <header className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-wide text-neutral-900">
-            My Collection
-          </h1>
-          <p className="text-neutral-600 mt-2 text-sm md:text-base leading-relaxed max-w-lg">
-            All your pieces in one place.
-          </p>
-        </header>
+    <main
+      className="max-w-screen-xl mx-auto px-6 pt-12 pb-24"
+      style={{ fontFamily: '"Playfair Display", serif' }}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr,180px] gap-8">
+        {/* LEFT: content */}
+        <section>
+          {/* header */}
+          <header className="mb-10">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-wide text-neutral-900">
+              My Collection
+            </h1>
+            <p className="text-neutral-600 mt-2 text-sm md:text-base leading-relaxed max-w-lg">
+              All your pieces in one place.
+            </p>
+          </header>
 
-        {/* status messages ... (unchanged) */}
+          {/* status messages ... (unchanged) */}
 
-        {state === "ready" && (
-          <>
-            {items.length === 0 && (
-              <section className="mb-10 flex justify-center">
-                <div className="border border-neutral-200 rounded-xl p-10 text-center max-w-md bg-neutral-50/50 shadow-sm">
-                  <h2 className="text-xl font-medium text-neutral-900 mb-2">
-                    Your wardrobe is empty
-                  </h2>
-                  <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
-                    Add your first item to start tracking what you own.
-                  </p>
-                  <AddButton label="Add first item" />
-                </div>
-              </section>
-            )}
+          {state === "ready" && (
+            <>
+              {items.length === 0 && (
+                <section className="mb-10 flex justify-center">
+                  <div className="border border-neutral-200 rounded-xl p-10 text-center max-w-md bg-neutral-50/50 shadow-sm">
+                    <h2 className="text-xl font-medium text-neutral-900 mb-2">
+                      Your wardrobe is empty
+                    </h2>
+                    <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
+                      Add your first item to start tracking what you own.
+                    </p>
+                    <AddButton label="Add first item" />
+                  </div>
+                </section>
+              )}
 
-            {items.length > 0 && (
-              <>
-                {CATEGORY_ORDER.map((catKey) => {
-                  const group = itemsByCategory[catKey] || [];
-                  if (group.length === 0) return null;
+              {items.length > 0 && (
+                <>
+                  {CATEGORY_ORDER.map((catKey) => {
+                    const group = itemsByCategory[catKey] || [];
+                    if (group.length === 0) return null;
 
-                  const label =
-                    CATEGORY_LABELS[catKey] ||
-                    catKey[0].toUpperCase() + catKey.slice(1);
+                    const label =
+                      CATEGORY_LABELS[catKey] ||
+                      catKey[0].toUpperCase() + catKey.slice(1);
 
-                  return (
-                    <section key={catKey} className="mb-12">
-                      {/* Section header: left title, right "Add" */}
-                      <div className="flex items-baseline justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
-                          <span>{label}</span>
-                          <span className="text-neutral-400 text-sm font-normal">
-                            ({group.length})
-                          </span>
-                        </h2>
+                    return (
+                      <section key={catKey} className="mb-12">
+                        {/* Section header: left title, right "Add" */}
+                        <div className="flex items-baseline justify-between mb-4">
+                          <h2 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
+                            <span>{label}</span>
+                            <span className="text-neutral-400 text-sm font-normal">
+                              ({group.length})
+                            </span>
+                          </h2>
 
-                      </div>
+                        </div>
 
-                      {/* Cards grid */}
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {group.map((it) => (
-                          <div key={it.id} className="relative">
-                            <ItemCard
-                              item={it}
-                              variant="mono"
-                              onClick={() => setSelected(it)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  );
-                })}
+                        {/* Cards grid */}
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                          {group.map((it) => (
+                            <div key={`${it.id}:${it.image_url || it.updated_at || ""}`} className="relative">
+                              <ItemCard
+                                item={it}
+                                variant="mono"
+                                onClick={() => setSelected(it)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                      </section>
+                    );
+                  })}
 
 
-              </>
-            )}
-          </>
-        )}
-      </section>
-<button
-  onClick={() => setSelected({ isNew: true })}
-  aria-label="Add item"
-  className="
+                </>
+              )}
+            </>
+          )}
+        </section>
+        <button
+          onClick={() => setSelected({ isNew: true })}
+          aria-label="Add item"
+          className="
     fixed bottom-6 z-30
     right-[max(1rem,calc((100vw-1280px)/2+1.5rem))]
     sm:right-[max(1.25rem,calc((100vw-1280px)/2+2rem))]
@@ -176,45 +191,45 @@ export default function CollectionPage() {
     focus:outline-none focus-visible:ring-4 focus-visible:ring-neutral-900/30
     backdrop-blur
   "
->
-  {/* subtle attention ping */}
-  <span
-    aria-hidden="true"
-    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400"
-  />
-  <span
-    aria-hidden="true"
-    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping"
-  />
+        >
+          {/* subtle attention ping */}
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping"
+          />
 
-  <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/30 text-xl leading-none">
-    ＋
-  </span>
-  <span className="font-semibold tracking-wide">Add item</span>
-</button>
+          <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/30 text-xl leading-none">
+            ＋
+          </span>
+          <span className="font-semibold tracking-wide">Add item</span>
+        </button>
 
-    </div>
+      </div>
 
-    {/* Modal (unchanged) */}
-    {selected && (
-      <DetailsModal
-        item={selected}
-        onClose={() => setSelected(null)}
-        onCreated={(newItem) => {
-          setItems((prev) => [newItem, ...prev]);
-          setSelected(null);
-        }}
-        onUpdated={(savedItem) => {
-          setItems((prev) => prev.map((it) => (it.id === savedItem.id ? savedItem : it)));
-          setSelected(savedItem);
-        }}
-        onDeleted={(deletedId) => {
-          setItems((prev) => prev.filter((it) => it.id !== deletedId));
-          setSelected(null);
-        }}
-      />
-    )}
-  </main>
-);
+      {/* Modal (unchanged) */}
+      {selected && (
+        <DetailsModal
+          item={selected}
+          onClose={() => setSelected(null)}
+          onCreated={(newItem) => {
+            setItems((prev) => [newItem, ...prev]); // newItem has image_url
+            setSelected(null);
+          }}
+          onUpdated={(savedItem) => {
+            setItems((prev) => prev.map((it) => (it.id === savedItem.id ? savedItem : it)));
+            setSelected(savedItem);
+          }}
+          onDeleted={(deletedId) => {
+            setItems((prev) => prev.filter((it) => it.id !== deletedId));
+            setSelected(null);
+          }}
+        />
+      )}
+    </main>
+  );
 
 }
