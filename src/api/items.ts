@@ -74,12 +74,11 @@ export async function updateItem(
   itemId: string,
   patch: Partial<ItemInsert>
 ): Promise<ItemView> {
-  // ensure updated_at bumps so consumers can key off it
-  const withTimestamp = { ...patch, updated_at: new Date().toISOString() as any };
+
 
   const { data, error } = await supabase
     .from("items")
-    .update(withTimestamp)
+    .update(patch)
     .eq("id", itemId)
     .select()
     .single();
