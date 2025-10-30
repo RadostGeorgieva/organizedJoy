@@ -7,3 +7,12 @@
   /* grid template columns (token name must be valid CSS var) */
   --cols-70-30: 70% 30%;
 }
+
+/* Global utility: hide scrollbars cross-browser */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;            /* Chrome, Safari, Opera */
+}
