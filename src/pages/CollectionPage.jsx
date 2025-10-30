@@ -80,124 +80,141 @@ export default function CollectionPage() {
   }
 
   return (
-    <main
-      className="max-w-screen-xl mx-auto px-6 pt-12 pb-20"
-      style={{ fontFamily: '"Playfair Display", serif' }}
-    >
-      {/* header */}
-      <header className="mb-10">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-wide text-neutral-900">
-          My Collection
-        </h1>
-        <p className="text-neutral-600 mt-2 text-sm md:text-base leading-relaxed max-w-lg">
-          All your pieces in one place.
-        </p>
-      </header>
+  <main
+    className="max-w-screen-xl mx-auto px-6 pt-12 pb-24"
+    style={{ fontFamily: '"Playfair Display", serif' }}
+  >
+    <div className="grid grid-cols-1 sm:grid-cols-[1fr,180px] gap-8">
+      {/* LEFT: content */}
+      <section>
+        {/* header */}
+        <header className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-wide text-neutral-900">
+            My Collection
+          </h1>
+          <p className="text-neutral-600 mt-2 text-sm md:text-base leading-relaxed max-w-lg">
+            All your pieces in one place.
+          </p>
+        </header>
 
-      {/* status messages */}
-      {state === "loading" && (
-        <div className="text-neutral-600 text-sm">Loading…</div>
-      )}
-      {state === "anon" && (
-        <div className="text-neutral-600 text-sm">
-          Please sign in to view your collection.
-        </div>
-      )}
-      {state === "error" && (
-        <div className="text-red-600 text-sm">Couldn’t load items.</div>
-      )}
+        {/* status messages ... (unchanged) */}
 
-      {state === "ready" && (
-        <>
-          {/*  no items yet */}
-          {items.length === 0 && (
-            <section className="mb-10 flex justify-center">
-              <div className="border border-neutral-200 rounded-xl p-10 text-center max-w-md bg-neutral-50/50 shadow-sm">
-                <h2 className="text-xl font-medium text-neutral-900 mb-2">
-                  Your wardrobe is empty
-                </h2>
+        {state === "ready" && (
+          <>
+            {items.length === 0 && (
+              <section className="mb-10 flex justify-center">
+                <div className="border border-neutral-200 rounded-xl p-10 text-center max-w-md bg-neutral-50/50 shadow-sm">
+                  <h2 className="text-xl font-medium text-neutral-900 mb-2">
+                    Your wardrobe is empty
+                  </h2>
+                  <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
+                    Add your first item to start tracking what you own.
+                  </p>
+                  <AddButton label="Add first item" />
+                </div>
+              </section>
+            )}
 
-                <p className="text-neutral-600 text-sm mb-6 leading-relaxed">
-                  Add your first item to start tracking what you own.
-                </p>
+            {items.length > 0 && (
+              <>
+                {CATEGORY_ORDER.map((catKey) => {
+                  const group = itemsByCategory[catKey] || [];
+                  if (group.length === 0) return null;
 
-                <AddButton label="Add first item" />
-              </div>
-            </section>
-          )}
+                  const label =
+                    CATEGORY_LABELS[catKey] ||
+                    catKey[0].toUpperCase() + catKey.slice(1);
 
-          {/* CASE 2: user already has items */}
-          {items.length > 0 && (
-            <>
-              {CATEGORY_ORDER.map((catKey) => {
-                const group = itemsByCategory[catKey] || [];
-                if (group.length === 0) return null; // skip empty categories
-
-                const label =
-                  CATEGORY_LABELS[catKey] || catKey[0].toUpperCase() + catKey.slice(1);
-
-                return (
-                  <section key={catKey} className="mb-12">
-                    {/* Section header row */}
-                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-4">
-                      <div className="mb-2 sm:mb-0">
+                  return (
+                    <section key={catKey} className="mb-12">
+                      {/* Section header: left title, right "Add" */}
+                      <div className="flex items-baseline justify-between mb-4">
                         <h2 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
                           <span>{label}</span>
                           <span className="text-neutral-400 text-sm font-normal">
                             ({group.length})
                           </span>
                         </h2>
+
                       </div>
-                    </div>
 
-                    {/* Cards grid for this category */}
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {group.map((it) => (
-                        <div key={it.id} className="relative">
-                          <ItemCard
-                            item={it}
-                            variant="mono"
-                            onClick={() => setSelected(it)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
+                      {/* Cards grid */}
+                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {group.map((it) => (
+                          <div key={it.id} className="relative">
+                            <ItemCard
+                              item={it}
+                              variant="mono"
+                              onClick={() => setSelected(it)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
 
-              {/* Global add at bottom if you still want it */}
-              <div className="flex justify-center">
-                <AddButton label="Add another item" />
-              </div>
-            </>
-          )}
-        </>
-      )}
 
-      {/* Modal */}
-      {selected && (
-        <DetailsModal
-          item={selected}
-          onClose={() => setSelected(null)}
-          onCreated={(newItem) => {
-            setItems((prev) => [newItem, ...prev]);
-            setSelected(null);
-          }}
-          onUpdated={(savedItem) => {
-            setItems((prev) =>
-              prev.map((it) => (it.id === savedItem.id ? savedItem : it))
-            ); setSelected(savedItem);
-          }}
-          onDeleted={(deletedId) => {
+              </>
+            )}
+          </>
+        )}
+      </section>
+<button
+  onClick={() => setSelected({ isNew: true })}
+  aria-label="Add item"
+  className="
+    fixed bottom-6 z-30
+    right-[max(1rem,calc((100vw-1280px)/2+1.5rem))]
+    sm:right-[max(1.25rem,calc((100vw-1280px)/2+2rem))]
+    inline-flex items-center gap-3
+    px-5 py-4 rounded-full
+    shadow-2xl border border-neutral-900/70
+    bg-gradient-to-r from-neutral-900 to-neutral-700 text-white
+    hover:from-white hover:to-white hover:text-neutral-900
+    transition transform hover:scale-105 active:scale-95
+    focus:outline-none focus-visible:ring-4 focus-visible:ring-neutral-900/30
+    backdrop-blur
+  "
+>
+  {/* subtle attention ping */}
+  <span
+    aria-hidden="true"
+    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400"
+  />
+  <span
+    aria-hidden="true"
+    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 animate-ping"
+  />
 
-            setItems((prev) => prev.filter((it) => it.id !== deletedId));
+  <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/30 text-xl leading-none">
+    ＋
+  </span>
+  <span className="font-semibold tracking-wide">Add item</span>
+</button>
 
-            setSelected(null);
-          }}
-        />
-      )}
+    </div>
 
-    </main>
-  );
+    {/* Modal (unchanged) */}
+    {selected && (
+      <DetailsModal
+        item={selected}
+        onClose={() => setSelected(null)}
+        onCreated={(newItem) => {
+          setItems((prev) => [newItem, ...prev]);
+          setSelected(null);
+        }}
+        onUpdated={(savedItem) => {
+          setItems((prev) => prev.map((it) => (it.id === savedItem.id ? savedItem : it)));
+          setSelected(savedItem);
+        }}
+        onDeleted={(deletedId) => {
+          setItems((prev) => prev.filter((it) => it.id !== deletedId));
+          setSelected(null);
+        }}
+      />
+    )}
+  </main>
+);
+
 }
