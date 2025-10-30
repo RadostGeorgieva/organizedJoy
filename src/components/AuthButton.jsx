@@ -38,7 +38,7 @@ export default function AuthButton() {
       onClick={() => navigate("/auth")}
       className="text-neutral-900 hover:underline underline-offset-4 text-sm"
     >
-      Sign In
+      Sign In / Register
     </button>
   );
 }
