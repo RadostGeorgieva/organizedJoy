@@ -6,9 +6,16 @@ type ItemRow     = Database["public"]["Tables"]["items"]["Row"];
 type ItemInsert  = Database["public"]["Tables"]["items"]["Insert"];
 type ItemCategory = Database["public"]["Enums"]["item_category"];
 
-// Extend the shape we return to include image_url
-export type ItemView = ItemRow & { image_url?: string | null };
 
+type ItemTypeRow  = Database["public"]["Tables"]["item_types"]["Row"];
+type ItemTypeAliasRow = Database["public"]["Tables"]["item_type_aliases"]["Row"];
+
+
+export type ItemView = ItemRow & {
+  image_url?: string | null;
+  type_label?: string | null; 
+  category_label?: string | null;
+};
 async function signUrl(cover_path?: string | null, expiresIn = 3600) {
   if (!cover_path) return null;
   const { data, error } = await supabase
@@ -21,8 +28,20 @@ async function signUrl(cover_path?: string | null, expiresIn = 3600) {
 
 async function enrichItem(it: ItemRow): Promise<ItemView> {
   const image_url = await signUrl(it.cover_path);
-  return { ...it, image_url };
+
+  let type_label: string | null = null;
+  if (it.type_id) {
+    const { data } = await supabase
+      .from("item_types")
+      .select("label")
+      .eq("id", it.type_id)
+      .single();
+    type_label = data?.label ?? null;
+  }
+
+  return { ...it, image_url, type_label };
 }
+
 
 export async function uploadWardrobeImage(userId: string, file: File): Promise<string> {
   if (!userId) throw new Error("No userId");
@@ -84,8 +103,6 @@ export async function updateItem(
     .single();
 
   if (error) throw error;
-
-  // IMPORTANT: return an enriched row with a **fresh signed URL**
   return enrichItem(data!);
 }
 
@@ -97,3 +114,24 @@ export async function deleteItem(itemId: string): Promise<void> {
 export const CATEGORIES: ItemCategory[] = [
   "top","bottom","dress","outerwear","shoes","bag","accessory","beauty","other",
 ];
+export async function listItemTypes(category?: ItemCategory): Promise<ItemTypeRow[]> {
+  let query = supabase.from("item_types").select("*").order("sort");
+  if (category) query = query.eq("category_slug", category);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function resolveTypeByAlias(alias: string): Promise<ItemTypeRow | null> {
+  const { data, error } = await supabase
+    .from("item_type_aliases")
+    .select(`
+      type_id,
+      item_types!inner(id, slug, label, category_slug, sort)
+    `)
+    .eq("alias", alias)
+    .maybeSingle();
+
+  if (error || !data?.item_types) return null;
+  return data.item_types as ItemTypeRow;
+}
