@@ -1,42 +1,67 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { createItem, updateItem, uploadWardrobeImage, CATEGORIES } from "../api/items";
+import { 
+  createItem,
+  updateItem,
+  uploadWardrobeImage,
+  listItemTypes,
+  CATEGORIES
+ } from "../api/items";
 
 export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem }) {
   const [form, setForm] = useState({
     title: "",
     brand: "",
     category: "top",
+    type_id: null,
     color_hex: "",
     size: "",
     price: "",
     purchase_date: "",
     notes: "",
+    season: "all",
     is_public: false,
   });
 
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [types, setTypes] = useState([]);
 
-  // prefill on open (edit mode)
+  const SEASONS = ["all", "spring", "summer", "autumn", "winter"];
+
+
   useEffect(() => {
     if (!initialItem) return;
     setForm({
       title: initialItem.title || "",
       brand: initialItem.brand || "",
       category: initialItem.category || "",
+      type_id: initialItem.type_id || null,
       color_hex: initialItem.color_hex || "",
       size: initialItem.size || "",
       price: initialItem.price != null ? String(initialItem.price) : "",
       purchase_date: initialItem.purchase_date || "",
       notes: initialItem.notes || "",
+      season: initialItem.season || "all",
       is_public: !!initialItem.is_public,
     });
     if (initialItem.image_url) setPreviewUrl(initialItem.image_url);
   }, [initialItem]);
+
+  // Fetch types based on category
+  useEffect(() => {
+    async function loadTypes() {
+      try {
+        const rows = await listItemTypes(form.category);
+        setTypes(rows);
+      } catch (err) {
+        console.error("Failed to load types:", err);
+      }
+    }
+    loadTypes();
+  }, [form.category]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -70,7 +95,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       return;
     }
 
-     try {
+    try {
       let cover_path = initialItem?.cover_path || null;
 
       // ⬇️ Upload image if chosen
@@ -79,27 +104,27 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       }
 
 
-    const payload = {
-      user_id: user.id,
-      title: form.title || null,
-      brand: form.brand || null,
-      category: form.category || null,
-      color_hex: form.color_hex || null,
-      size: form.size || null,
-      price: form.price === "" ? null : Number(form.price),
-      purchase_date: form.purchase_date || null,
-      notes: form.notes || null,
-      is_public: form.is_public,
-      cover_path,
-    };
+      const payload = {
+        user_id: user.id,
+        title: form.title || null,
+        brand: form.brand || null,
+        category: form.category || null,
+        type_id: form.type_id ? Number(form.type_id) : null,
+        color_hex: form.color_hex || null,
+        size: form.size || null,
+        price: form.price === "" ? null : Number(form.price),
+        purchase_date: form.purchase_date || null,
+        notes: form.notes || null,
+        season: form.season || "all",
+        is_public: form.is_public,
+        cover_path,
+      };
 
       let saved;
       if (initialItem && initialItem.id) {
-        // EDIT EXISTING
         saved = await updateItem(initialItem.id, payload);
         if (onUpdated) onUpdated(saved);
       } else {
-        // CREATE NEW
         saved = await createItem(user.id, payload);
         if (onCreated) onCreated(saved);
       }
@@ -165,7 +190,48 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
           </select>
         </div>
       </div>
+       {/* Type + Season */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">Type</label>
+          <select
+            name="type_id"
+            value={form.type_id || ""}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                type_id: e.target.value ? Number(e.target.value) : null,
+              }))
+            }
+            className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+          >
+            <option value="">Select type</option>
+            {types.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">Season</label>
+          <select
+            name="season"
+            value={form.season}
+            onChange={handleChange}
+            className="w-full border rounded-lg px-3 py-2 text-sm bg-white"
+          >
+            {SEASONS.map((s) => (
+              <option key={s} value={s}>
+                {s === "all" ? "All seasons" : s[0].toUpperCase() + s.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+          
       {/* Color picker + Size */}
       <div className="grid grid-cols-2 gap-4">
         {/* Color block */}
@@ -275,7 +341,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
       </div>
 
       {/* Image Upload */}
- <div>
+      <div>
         <label className="block text-xs text-neutral-500 mb-1">
           Item Photo
         </label>
@@ -323,7 +389,7 @@ export default function AddItemForm({ onClose, onCreated, onUpdated, initialItem
         </div>
       </div>
 
-        {/* Public toggle */}
+      {/* Public toggle */}
       <div className="flex items-center gap-2">
         <input
           id="is_public"
