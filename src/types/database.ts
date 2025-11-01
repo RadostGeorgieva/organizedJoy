@@ -384,6 +384,7 @@ export type Database = {
         Update: {
           alias?: string
           type_id?: number
+          
         }
         Relationships: [
           {
