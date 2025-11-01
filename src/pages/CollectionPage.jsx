@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-import ItemCard from "../components/ItemCard";
 import DetailsModal from "../components/DetailsModal";
 import { supabase } from "../lib/supabase";
 import { listMyItemsCurrent } from "../api/items";
@@ -15,7 +14,7 @@ export default function CollectionPage() {
 
     async function load() {
       try {
-        const rows = await listMyItemsCurrent(); // returns ItemView with image_url
+        const rows = await listMyItemsCurrent();
         if (!cancelled) {
           setItems(rows);
           setState("ready");
@@ -98,7 +97,7 @@ export default function CollectionPage() {
   return (
     <main className="max-w-screen-xl mx-auto px-6 pt-12 pb-24" style={{ fontFamily: '"Playfair Display", serif' }}>
       <div className="grid grid-cols-1 sm:grid-cols-[1fr,180px] gap-8">
-        {/* LEFT: content */}
+
         <section>
           <header className="mb-10">
             <h1 className="text-3xl md:text-4xl font-semibold tracking-wide text-neutral-900">My Collection</h1>
@@ -180,7 +179,7 @@ export default function CollectionPage() {
       </div>
       
 
-      {/* Modal */}
+
       {selected && (
         <DetailsModal
           item={selected}
